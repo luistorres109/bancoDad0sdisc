@@ -63,4 +63,5 @@ match (e:Estudante {curso: 'Análise e Desenvolvimento de Sistemas'})-[r:reserva
 
 // H
 match (e:Estudante)-[r:reserva_computador {data: date('2024-12-24')}]->(c:Computador) return e.nome, c.id;
+
 match (e:Estudante)-[r:reserva_computador {data: date('2024-12-24')}]->(c:Computador) delete r;
