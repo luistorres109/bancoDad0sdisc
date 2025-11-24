@@ -1,0 +1,287 @@
+CREATE DATABASE trabalho;
+USE trabalho;
+
+CREATE TABLE cliente(
+    cpf_cliente VARCHAR(11),
+    rg VARCHAR(7),
+    nome VARCHAR(30) NOT NULL,
+    datanasc DATE,
+    email VARCHAR(50),
+    cidade VARCHAR(20),
+    uf VARCHAR(2),
+    UNIQUE KEY (rg),
+    PRIMARY KEY (cpf_cliente)
+);
+
+CREATE TABLE reserva(
+    id_reserva BIGINT AUTO_INCREMENT,
+    cpf_cliente VARCHAR(11),
+    data_reserva DATE,
+    validade BOOL,
+    efetivada BOOL,
+    FOREIGN KEY (cpf_cliente) REFERENCES cliente(cpf_cliente),
+    PRIMARY KEY (id_reserva)
+);
+
+CREATE TABLE aeronave(
+    id_aeronave BIGINT AUTO_INCREMENT,
+    tipo VARCHAR(15),
+    PRIMARY KEY (id_aeronave)
+);
+
+CREATE TABLE trechos(
+    id_trecho BIGINT AUTO_INCREMENT,
+	id_aeronave BIGINT,
+    data_voo DATE,
+    hora TIME,
+    tipo_classe ENUM('Economica', 'Executiva', 'Primeira Classe'),
+    id_reserva BIGINT,
+    origem VARCHAR(30),
+    destino VARCHAR(30),
+    FOREIGN KEY (id_reserva) REFERENCES reserva(id_reserva),
+    FOREIGN KEY (id_aeronave) REFERENCES aeronave(id_aeronave),
+    PRIMARY KEY (id_trecho)
+);
+
+CREATE TABLE venda(
+    id_venda BIGINT AUTO_INCREMENT,
+    id_reserva BIGINT,
+    data_venda DATE,
+    valor DECIMAL(10,2),
+    forma_pagamento ENUM('Cartao de Credito'),
+    operadora ENUM('Visa', 'Mastercard'),
+    no_parcelas INT CHECK (no_parcelas <= 6),
+    FOREIGN KEY (id_reserva) REFERENCES reserva(id_reserva),
+    PRIMARY KEY (id_venda)
+);
+
+DELIMITER //
+CREATE TRIGGER cancelar_reserva_expirada
+AFTER UPDATE ON reserva
+FOR EACH ROW
+BEGIN
+    IF NEW.validade = TRUE AND NEW.data_reserva < (CURDATE() - INTERVAL 30 DAY) THEN
+        UPDATE reserva SET validade = FALSE, efetivada = FALSE WHERE id_reserva = NEW.id_reserva;
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE efetivar_reserva(IN res_id BIGINT, IN valor DECIMAL(10,2), IN parcelas INT)
+BEGIN
+    DECLARE reserva_valida BOOL;
+    DECLARE reserva_efetivada BOOL;
+    SELECT validade, efetivada INTO reserva_valida, reserva_efetivada FROM reserva WHERE id_reserva = res_id;
+    IF reserva_valida AND NOT reserva_efetivada THEN
+        UPDATE reserva SET efetivada = TRUE WHERE id_reserva = res_id;
+        INSERT INTO venda (id_reserva, data_venda, valor, forma_pagamento, no_parcelas)
+        VALUES (res_id, CURDATE(), valor, 'Cartao de Credito', parcelas);
+    ELSE
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Reserva inválida ou já efetivada';
+    END IF;
+END //
+
+DELIMITER ;
+
+INSERT INTO cliente (cpf_cliente, rg, nome, datanasc, email, cidade, uf) VALUES
+('12345678901', 'MG12345', 'Pedro Silva', '1980-05-15', 'pedro.silva@hotmail.com', 'Belo Horizonte', 'MG'),
+('23456789012', 'SP23456', 'Luís Ramiro', '1990-10-20', 'luis.ramiro@gmail.com', 'São Paulo', 'SP'),
+('34567890123', 'RJ34567', 'Jacira Torres', '1985-03-25', 'jacira.t@gmail.com', 'Rio de Janeiro', 'RJ'),
+('45678901234', 'BA45678', 'Rafael Santos', '1995-07-30', 'rafael.santos@hotmail.com', 'Salvador', 'BA'),
+('56789012345', 'PR56789', 'Elena Pera', '1975-01-10', 'elena.pera@gmail.com', 'Curitiba', 'PR'),
+('67890123456', 'RS67890', 'Felipe Costa', '1988-11-05', 'felipe.costa@hotmail.com', 'Porto Alegre', 'RS');
+
+INSERT INTO reserva (cpf_cliente, data_reserva, validade, efetivada) VALUES
+('12345678901', '2023-09-01', TRUE, FALSE),
+('23456789012', '2023-09-02', TRUE, FALSE),
+('34567890123', '2023-09-03', TRUE, TRUE),
+('45678901234', '2023-09-04', TRUE, FALSE),
+('56789012345', '2023-09-05', TRUE, FALSE),
+('67890123456', '2023-09-06', TRUE, TRUE);
+
+INSERT INTO aeronave (tipo) VALUES
+('Boeing 737'),
+('Airbus A320'),
+('Boeing 777'),
+('Embraer E190'),
+('Boeing 747'),
+('Airbus A330');
+
+INSERT INTO trechos (id_aeronave, data_voo, hora, tipo_classe, id_reserva, origem, destino) VALUES
+(1, '2023-09-01', '08:00:00', 'Economica', 1, 'Belo Horizonte', 'São Paulo'),
+(2, '2023-09-01', '10:00:00', 'Executiva', 1, 'São Paulo', 'Rio de Janeiro'),
+(3, '2023-09-02', '09:00:00', 'Primeira Classe', 2, 'São Paulo', 'Salvador'),
+(4, '2023-09-03', '11:00:00', 'Economica', 3, 'Rio de Janeiro', 'Curitiba'),
+(5, '2023-09-04', '12:00:00', 'Executiva', 4, 'Salvador', 'Porto Alegre'),
+(6, '2023-09-05', '13:00:00', 'Primeira Classe', 5, 'Curitiba', 'Belo Horizonte');
+
+INSERT INTO venda (id_reserva, data_venda, valor, forma_pagamento, operadora, no_parcelas) VALUES
+(3, '2023-09-07', 250.00, 'Cartao de Credito', 'Visa', 2),
+(6, '2023-09-08', 400.00, 'Cartao de Credito', 'Mastercard', 1);
+
+SELECT
+    t.data_voo AS Data,
+    t.hora AS Horário,
+    t.origem AS Origem,
+    t.destino AS Destino
+FROM
+    trechos t
+WHERE
+    t.data_voo BETWEEN '2023-01-01' AND '2023-12-31'
+ORDER BY
+    t.data_voo, t.hora;
+
+SELECT
+    r.data_reserva,
+    r.validade,
+    r.efetivada,
+    t.data_voo,
+    t.hora,
+    t.tipo_classe,
+    t.origem,
+    t.destino,
+    a.tipo AS Aeronave,
+    v.data_venda,
+    v.valor AS ValorVenda,
+    v.forma_pagamento,
+    v.no_parcelas AS ParcelasVenda
+FROM
+    cliente c
+JOIN
+    reserva r ON c.cpf_cliente = r.cpf_cliente
+JOIN
+    trechos t ON r.id_reserva = t.id_reserva
+JOIN
+    aeronave a ON t.id_aeronave = a.id_aeronave
+LEFT JOIN
+    venda v ON r.id_reserva = v.id_reserva
+WHERE
+    c.cpf_cliente = '34567890123'
+    AND t.data_voo BETWEEN '2023-01-01' AND '2023-12-31'
+ORDER BY
+    t.data_voo, t.hora;
+
+SELECT
+    c.nome AS NomeCliente,
+    c.email AS Email,
+    t.origem AS CidadeOrigem,
+    t.destino AS CidadeDestino,
+    t.data_voo AS DataVoo,
+    t.hora AS HoraVoo
+FROM
+    cliente c
+JOIN
+    reserva r ON c.cpf_cliente = r.cpf_cliente
+JOIN
+    trechos t ON r.id_reserva = t.id_reserva
+WHERE
+    t.data_voo = '2023-09-01'
+    AND t.id_aeronave = 1
+ORDER BY
+    t.hora;
+
+SELECT
+    SUM(valor) AS TotalPagamentos
+FROM
+    venda
+WHERE
+    operadora = 'Mastercard'
+    AND data_venda BETWEEN '2023-09-01' AND '2023-09-30';
+
+CREATE TABLE reserva_auxiliar (
+    id_reserva BIGINT,
+    cpf_cliente VARCHAR(11),
+    data_reserva DATE,
+    validade BOOL,
+    efetivada BOOL,
+    FOREIGN KEY (cpf_cliente) REFERENCES cliente(cpf_cliente),
+    PRIMARY KEY (id_reserva)
+);
+
+DELIMITER //
+
+CREATE PROCEDURE transferir_reservas_nao_efetivadas()
+BEGIN
+    INSERT INTO reserva_auxiliar (id_reserva, cpf_cliente, data_reserva, validade, efetivada)
+    SELECT id_reserva, cpf_cliente, data_reserva, validade, efetivada
+    FROM reserva
+    WHERE efetivada = FALSE;
+    
+    UPDATE reserva_auxiliar SET validade = FALSE, efetivada = FALSE;
+    
+    DELETE FROM trechos WHERE id_reserva IN (SELECT id_reserva FROM reserva WHERE efetivada = FALSE);
+    DELETE FROM venda WHERE id_reserva IN (SELECT id_reserva FROM reserva WHERE efetivada = FALSE);
+
+    DELETE FROM reserva WHERE efetivada = FALSE;
+END //
+
+DELIMITER ;
+
+CALL transferir_reservas_nao_efetivadas();
+select * from reserva_auxiliar;
+select * from reserva;
+
+DELIMITER //
+
+CREATE FUNCTION get_cliente_age(client_cpf VARCHAR(11))
+RETURNS INT
+BEGIN
+    DECLARE age INT;
+    DECLARE birth_date DATE;
+
+    SELECT datanasc INTO birth_date
+    FROM cliente
+    WHERE cpf_cliente = client_cpf;
+
+    SELECT TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) INTO age;
+
+    RETURN age;
+END //
+
+DELIMITER ;
+
+SELECT get_cliente_age('12345678901') AS age;
+
+SELECT
+    nome,
+    datanasc
+FROM
+    cliente
+WHERE
+    DAY(datanasc) = DAY('1988-11-05') AND
+    MONTH(datanasc) = MONTH('1988-11-05') AND
+    YEAR(datanasc) = YEAR('1988-11-05');
+
+SELECT
+    c.nome AS Nome,
+    c.email AS Email
+FROM
+    cliente c
+LEFT JOIN
+    reserva r ON c.cpf_cliente = r.cpf_cliente
+LEFT JOIN
+    trechos t ON r.id_reserva = t.id_reserva AND YEAR(t.data_voo) = YEAR(CURDATE()) - 1
+WHERE
+    t.id_trecho IS NULL;
+
+DELIMITER //
+
+CREATE FUNCTION contar_reservas(
+    client_cpf VARCHAR(11),
+    data_inicio DATE,
+    data_fim DATE
+) RETURNS INT
+BEGIN
+    DECLARE total_reservas INT;
+
+    SELECT COUNT(*) INTO total_reservas
+    FROM reserva
+    WHERE cpf_cliente = client_cpf
+    AND data_reserva BETWEEN data_inicio AND data_fim;
+
+    RETURN total_reservas;
+END //
+
+DELIMITER ;
+
+SELECT contar_reservas('34567890123', '2023-01-01', '2023-12-31') AS TotalReservas;

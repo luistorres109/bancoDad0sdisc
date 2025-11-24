@@ -1,0 +1,342 @@
+import os
+import time
+import mysql.connector
+from datetime import date
+from mysql.connector import Error
+
+# Funções de suporte
+def clear_screen():
+    command = 'cls' if os.name in ('nt', 'dos') else 'clear'
+    os.system(command)
+
+def formatar_valor(valor):
+    integer_part, decimal_part = f"{valor:.2f}".split(".")
+    integer_part_with_dots = ".".join([integer_part[max(i-3, 0):i] for i in range(len(integer_part), 0, -3)][::-1])
+    formatted_value = f"R${integer_part_with_dots},{decimal_part}"
+
+    return formatted_value
+
+def create_connection():
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="trabalho"
+    )
+
+# Funções do CRUD
+def create_client(cpf, rg, nome, datanasc, email, cidade, uf):
+    try:
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO cliente (cpf_cliente, rg, nome, datanasc, email, cidade, uf)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (cpf, rg, nome, datanasc, email, cidade, uf))
+        conn.commit()
+        print("Cliente criado com sucesso!")
+    except Error as e:
+        print(f"Erro ao criar cliente: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+    time.sleep(4)
+    clear_screen()
+
+def read_clients(cpf):
+    try:
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT * FROM cliente WHERE cpf_cliente = {cpf}")
+        try:
+            cliente_cursor = cursor.fetchall()[0]
+            print("Dados do cliente: ")
+            print(f"- Nome: {cliente_cursor[2]}")
+            print(f"- RG: {cliente_cursor[1]}")
+            print(f"- CPF: {cliente_cursor[0]}")
+            data_nasc = cliente_cursor[3].strftime("%d/%m/%Y")
+            print(f"- Data de Nascimento: {data_nasc}")
+            print(f"- E-mail: {cliente_cursor[4]}")
+            print(f"- UF: {cliente_cursor[6]}")
+            print(f"- Cidade: {cliente_cursor[5]}")
+        except:
+            print("Cliente não encotrado!")
+    except Error as e:
+        print(f"Erro ao ler clientes: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+    time.sleep(4)
+    clear_screen()
+
+def update_client(cpf, campo, novo_valor):
+    try:
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute(f"UPDATE cliente SET {campo} = %s WHERE cpf_cliente = %s", (novo_valor, cpf))
+        conn.commit()
+        print("Cliente atualizado com sucesso!")
+    except Error as e:
+        print(f"Erro ao atualizar cliente: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+    time.sleep(4)
+    clear_screen()
+
+def delete_client(cpf):
+    try:
+        conn = create_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            DELETE v FROM venda v
+            JOIN reserva r ON v.id_reserva = r.id_reserva
+            WHERE r.cpf_cliente = %s
+        """, (cpf,))
+        cursor.execute("""
+            DELETE t FROM trechos t
+            JOIN reserva r ON t.id_reserva = r.id_reserva
+            WHERE r.cpf_cliente = %s
+        """, (cpf,))
+        cursor.execute("DELETE FROM reserva WHERE cpf_cliente = %s", (cpf,))
+        cursor.execute("DELETE FROM reserva_auxiliar WHERE cpf_cliente = %s", (cpf,))
+        cursor.execute("DELETE FROM cliente WHERE cpf_cliente = %s", (cpf,))
+
+        conn.commit()
+        print("Cliente deletado com sucesso!")
+    except Error as e:
+        print(f"Erro ao deletar cliente: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+    time.sleep(4)
+    clear_screen()
+
+def create_reservation(cpf_cliente):
+    try:
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO reserva (cpf_cliente, data_reserva, validade, efetivada)
+            VALUES (%s, %s, %s, %s)
+        """, (cpf_cliente, date.today(), 1, 0))
+        reserva_id = cursor.lastrowid
+        conn.commit()
+        print(f"Reserva criada com sucesso! ID da Reserva: {reserva_id}")
+        return reserva_id
+    except Error as e:
+        print(f"Erro ao criar reserva: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+    time.sleep(4)
+    clear_screen()
+
+def create_trecho(id_reserva, id_aeronave, data_voo, hora, tipo_classe, origem, destino):
+    try:
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO trechos (id_reserva, id_aeronave, data_voo, hora, tipo_classe, origem, destino)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (id_reserva, id_aeronave, data_voo, hora, tipo_classe, origem, destino))
+        conn.commit()
+        print("Trecho criado com sucesso!")
+    except Error as e:
+        print(f"Erro ao criar trecho: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+    time.sleep(4)
+    clear_screen()
+
+def create_venda(id_reserva, data_venda, valor, forma_pagamento, operadora, no_parcelas):
+    try:
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO venda (id_reserva, data_venda, valor, forma_pagamento, operadora, no_parcelas)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (id_reserva, data_venda, valor, forma_pagamento, operadora, no_parcelas))
+        conn.commit()
+        print("Venda criada com sucesso!")
+    except Error as e:
+        print(f"Erro ao criar venda: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+def confirmar_reserva(id_reserva):
+    try:
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE reserva SET validade = 1, efetivada = 1 WHERE id_reserva = %s", (id_reserva,))
+        conn.commit()
+        print("Venda confirmada com sucesso!")
+    except Error as e:
+        print(f"Erro ao confirmar venda: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+def cancelar_reserva(id_reserva):
+    try:
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM venda WHERE id_reserva = %s", (id_reserva,))
+        cursor.execute("DELETE FROM trechos WHERE id_reserva = %s", (id_reserva,))
+        cursor.execute("INSERT INTO reserva_auxiliar (id_reserva, cpf_cliente, data_reserva, validade, efetivada) SELECT id_reserva, cpf_cliente, data_reserva, validade, efetivada FROM reserva WHERE id_reserva = %s", (id_reserva,))
+        cursor.execute("UPDATE reserva_auxiliar SET validade = 0, efetivada = 0 WHERE id_reserva = %s", (id_reserva,))
+        cursor.execute("DELETE FROM reserva WHERE id_reserva = %s", (id_reserva,))
+        conn.commit()
+        print("Venda cancelada com sucesso!")
+    except Error as e:
+        print(f"Erro ao cancelar venda: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+    time.sleep(4)
+    clear_screen()
+
+def read_reservations(cpf):
+    try:
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute(f"""
+            SELECT
+                c.cpf_cliente, c.nome, r.data_reserva, r.validade, r.efetivada,
+                t.data_voo, t.hora, t.tipo_classe, t.origem, t.destino,
+                a.tipo AS Aeronave
+            FROM cliente c
+                JOIN reserva r ON c.cpf_cliente = r.cpf_cliente
+                JOIN trechos t ON r.id_reserva = t.id_reserva
+                JOIN aeronave a ON t.id_aeronave = a.id_aeronave
+            WHERE 
+                c.cpf_cliente = '{cpf}'
+            ORDER BY t.data_voo, t.hora
+        """)
+        dados = cursor.fetchall()
+        print("Dados da Reserva: ")
+        contador = 0
+        for dado in dados:
+            contador += 1
+            print(f"Reserva n° {contador}: ")
+            print(f"- Nome do Cliente: {dado[1]}")
+            print(f"- CPF: {dado[0]}")
+            data_res = dado[2].strftime("%d/%m/%Y")
+            print(f"- Data da Reserva: {data_res}")
+            print(f"- Validade: {'Positiva' if dado[3] == 1 else 'Negativa'}")
+            print(f"- Efetividade: {'Positiva' if dado[4] == 1 else 'Negativa'}")
+            data_voo= dado[5].strftime("%d/%m/%Y")
+            print(f"- Data do Voo: {data_voo}")
+            print(f"- Hora: {dado[6]}")
+            print(f"- Classe: {dado[7]}")
+            print(f"- Origem: {dado[8]}")
+            print(f"- Destino: {dado[9]}")
+            print(f"- Aeronave: {dado[10]}")
+    except Error as e:
+        print(f"Erro ao ler reservas: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+    time.sleep(4)
+    clear_screen()
+
+# Função principal
+def main():
+    while True:
+        print("\nEscolha uma opção:")
+        print("1. Criar Novo Cliente")
+        print("2. Ler Clientes")
+        print("3. Atualizar Cliente")
+        print("4. Deletar Cliente")
+        print("5. Criar Nova Reserva")
+        print("6. Confirmar Reserva")
+        print("7. Cancelar Reserva")
+        print("8. Ler Reservas")
+        print("9. Sair")
+        opcao = input("Opção: ")
+        time.sleep(4)
+        clear_screen()
+
+        if opcao == "1":
+            cpf = input("CPF: ")
+            rg = input("RG: ")
+            nome = input("Nome: ")
+            datanasc = input("Data de Nascimento (AAAA-MM-DD): ")
+            email = input("Email: ")
+            cidade = input("Cidade: ")
+            uf = input("UF: ")
+            create_client(cpf, rg, nome, datanasc, email, cidade, uf)
+        elif opcao == "2":
+            cpf = input("CPF do Cliente: ")
+            clear_screen()
+            read_clients(cpf)
+        elif opcao == "3":
+            cpf = input("CPF do Cliente: ")
+            print("Campos que podem ser atualizados:")
+            print("1 - Nome")
+            print("2 - E-mail")
+            print("3 - Cidade")
+            print("4 - UF")
+            campo = int(input("Qual o número do campo? "))
+            if campo == 1:
+                campo_1 = 'nome'
+                campo_2 = 'Nome'
+            elif campo == 2:
+                campo_1 = 'email'
+                campo_2 = 'E-mail'
+            elif campo == 3:
+                campo_1 = 'cidade'
+                campo_2 = 'Cidade'
+            elif campo == 3:
+                campo_1 = 'uf'
+                campo_2 = 'UF'
+            novo_valor = input(f"Novo valor para {campo_2}: ")
+            update_client(cpf, campo_1, novo_valor)
+        elif opcao == "4":
+            cpf = input("CPF do Cliente: ")
+            delete_client(cpf)
+        elif opcao == "5":
+            cpf_cliente = input("CPF do Cliente: ")
+            id_reserva = create_reservation(cpf_cliente)
+            if id_reserva:
+                while True:
+                    print("Adicionando trecho: ")
+                    id_aeronave = input("- ID da Aeronave: ")
+                    data_voo = input("- Data do Voo (AAAA-MM-DD): ")
+                    hora = input("- Hora do Voo (HH:MM:SS): ")
+                    tipo_classe = input("- Tipo de Classe (Economica, Executiva, Primeira Classe): ")
+                    origem = input("- Origem: ")
+                    destino = input("- Destino: ")
+                    create_trecho(id_reserva, id_aeronave, data_voo, hora, tipo_classe, origem, destino)
+                    mais_trechos = input("Deseja adicionar mais trechos? (s/n): ")
+                    if mais_trechos.lower() != 's':
+                        clear_screen()
+                        break
+        elif opcao == "6":
+            id_reserva = input("ID da Reserva: ")
+            valor = input("Valor da Venda: ")
+            data_venda = date.today()
+            forma_pagamento = 'Cartão de Crédito'
+            operadora = input("Operadora (Visa, Mastercard): ")
+            no_parcelas = input("Número de Parcelas: ")
+            create_venda(id_reserva, data_venda, valor, forma_pagamento, operadora, no_parcelas)
+            confirmar_reserva(id_reserva)
+            time.sleep(4)
+            clear_screen()
+        elif opcao == "7":
+            id_reserva = input("ID da Reserva: ")
+            cancelar_reserva(id_reserva)
+        elif opcao == "8":
+            cpf = input("CPF do Cliente para consultas as reservas: ")
+            read_reservations(cpf)
+        elif opcao == "9":
+            break
+        else:
+            print("Opção inválida. Tente novamente.")
+    
+
+if __name__ == "__main__":
+    main()
