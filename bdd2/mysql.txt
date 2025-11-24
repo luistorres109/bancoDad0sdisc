@@ -1,0 +1,41 @@
+create database trabalho3;
+use trabalho3;
+
+CREATE TABLE Cliente (
+    id INT AUTO_INCREMENT,
+    cpf VARCHAR(11),
+    nome VARCHAR(30),
+    endereco VARCHAR(30),
+    cidade VARCHAR(30),
+    uf VARCHAR(2),
+    email VARCHAR(30),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE Compra (
+    codigo INT AUTO_INCREMENT,
+    produto VARCHAR(30),
+    valor DECIMAL(10,2),
+    data DATE,
+    id_cliente INT,
+    PRIMARY KEY (codigo),
+    FOREIGN KEY (id_cliente) REFERENCES Cliente(id)
+);
+
+INSERT INTO Cliente (cpf, nome, endereco, cidade, uf, email) VALUES ('18375929800', 'Luís', 'Rua Santo Antônio - 140', 'Chapecó', 'SC', 'luistorres10@unochapeco.edu.br');
+INSERT INTO Cliente (cpf, nome, endereco, cidade, uf, email) VALUES ('18375929801', 'Marcos', 'Rua Santo Augusto - 300', 'São Paulo', 'SP', 'marquinhos@hotmail.com');
+INSERT INTO Cliente (cpf, nome, endereco, cidade, uf, email) VALUES ('18375929802', 'Carlos', 'Rua Santo Leonardo - 250', 'São Paulo', 'SP', 'carlinhos@hotmail.com');
+INSERT INTO Cliente (cpf, nome, endereco, cidade, uf, email) VALUES ('18375929803', 'Amanda', 'Rua São Bernando - 320', 'Chapecó', 'SC', 'amanda@unochapeco.edu.br');
+INSERT INTO Cliente (cpf, nome, endereco, cidade, uf, email) VALUES ('18375929807', 'Pedro', 'Rua São Lucas - 320', 'Chapecó', 'SC', 'pedro@unochapeco.edu.br');
+
+INSERT INTO Compra (produto, valor, data, id_cliente) VALUES ('Frutas', 150.20, '2024-10-12', 1);
+INSERT INTO Compra (produto, valor, data, id_cliente) VALUES ('Lanches', 52.94, '2023-03-20', 1);
+INSERT INTO Compra (produto, valor, data, id_cliente) VALUES ('Massas', 154.23, '2023-02-23', 1);
+INSERT INTO Compra (produto, valor, data, id_cliente) VALUES ('Carne', 1000.20, '2024-03-05', 2);
+INSERT INTO Compra (produto, valor, data, id_cliente) VALUES ('Câmera de Vídeo', 232.39, '2024-02-13', 3);
+INSERT INTO Compra (produto, valor, data, id_cliente) VALUES ('Massas', 154.23, '2023-02-23', 3);
+INSERT INTO Compra (produto, valor, data, id_cliente) VALUES ('Frutas', 150.20, '2024-10-12', 4);
+INSERT INTO Compra (produto, valor, data, id_cliente) VALUES ('Eletrônicos', 1000.20, '2024-05-23', 4);
+INSERT INTO Compra (produto, valor, data, id_cliente) VALUES ('Vegetais', 324.49, '2023-11-30', 4);
+INSERT INTO Compra (produto, valor, data, id_cliente) VALUES ('Brinquedos', 200.00, '2023-12-20', 4);
+INSERT INTO Compra (produto, valor, data, id_cliente) VALUES ('Eletrônicos', 150.20, '2024-10-12', 5);
