@@ -1,0 +1,162 @@
+[{
+  "_id": {
+    "$oid": "66566b6cc23c3588a89f0bf6"
+  },
+  "pessoa": {
+    "id": 1,
+    "nome": "Ruam",
+    "cpf": {
+      "$numberLong": "12345678900"
+    },
+    "numero": {
+      "$numberLong": "49998020787"
+    },
+    "email": "ruam@gmail.com",
+    "endereco": "rua joaçaba",
+    "projeto": {
+      "id": 1,
+      "nome": "projeto A",
+      "ata_entrega": "26-06-2004",
+      "tipo": "software",
+      "produto": "projeto abex"
+    }
+  }
+},
+{
+  "_id": {
+    "$oid": "66566c11c23c3588a89f0bf9"
+  },
+  "pessoa": {
+    "id": 2,
+    "nome": "Henrique",
+    "cpf": {
+      "$numberLong": "12345678911"
+    },
+    "numero": {
+      "$numberLong": "49998020727"
+    },
+    "email": "henrique@gmail.com",
+    "endereco": "rua joaçaba",
+    "projeto": {
+      "id": 1,
+      "nome": "projeto A",
+      "ata_entrega": "26-06-2004",
+      "tipo": "software",
+      "produto": "projeto abex"
+    }
+  }
+},
+{
+  "_id": {
+    "$oid": "66566c39c23c3588a89f0bfa"
+  },
+  "pessoa": {
+    "id": 3,
+    "nome": "geio",
+    "cpf": {
+      "$numberLong": "12345678933"
+    },
+    "numero": {
+      "$numberLong": "49888884444"
+    },
+    "email": "geio@gmail.com",
+    "endereco": "rua joaçaba",
+    "projeto": {
+      "id": 1,
+      "nome": "projeto A",
+      "ata_entrega": "26-06-2004",
+      "tipo": "software",
+      "produto": "projeto abex"
+    }
+  }
+},
+{
+  "_id": {
+    "$oid": "66566c59c23c3588a89f0bfb"
+  },
+  "pessoa": {
+    "id": 4,
+    "nome": "meu",
+    "cpf": {
+      "$numberLong": "32132132121"
+    },
+    "numero": {
+      "$numberLong": "49977775555"
+    },
+    "email": "meu@gmail.com",
+    "endereco": "rua joaçaba",
+    "projeto": {
+      "id": 1,
+      "nome": "projeto A",
+      "ata_entrega": "26-06-2004",
+      "tipo": "software",
+      "produto": "projeto abex"
+    }
+  }
+},
+{
+  "_id": {
+    "$oid": "66566c8bc23c3588a89f0bfc"
+  },
+  "pessoa": {
+    "id": 5,
+    "nome": "meutwo",
+    "cpf": {
+      "$numberLong": "65465465478"
+    },
+    "numero": {
+      "$numberLong": "49977774455"
+    },
+    "email": "meutwo@gmail.com",
+    "endereco": "rua joaçaba",
+    "projeto": {
+      "id": 1,
+      "nome": "projeto B",
+      "ata_entrega": "26-06-2078",
+      "tipo": "software",
+      "produto": "projeto bd"
+    }
+  }
+},
+{
+  "_id": {
+    "$oid": "66566d44c23c3588a89f0bff"
+  },
+  "equipe": {
+    "id": 1,
+    "nome": "time a",
+    "projeto": {
+      "id": 1,
+      "nome": "projeto A",
+      "ata_entrega": "26-06-2004",
+      "tipo": "software",
+      "produto": "projeto abex"
+    }
+  }
+},
+{
+  "_id": {
+    "$oid": "66566d71c23c3588a89f0c02"
+  },
+  "equipe": {
+    "id": 2,
+    "nome": "time b",
+    "projeto": {
+      "id": 1,
+      "nome": "projeto B",
+      "ata_entrega": "26-06-2078",
+      "tipo": "software",
+      "produto": "projeto bd"
+    }
+  }
+}]
+
+
+// Consulta
+{"pessoa.nome": "Ruam"}
+
+//Alteração
+db.Pessoa.updateOne({ nome:'Ruam'}, {$set: {nome: 'Roger'}});
+
+//Deleção
+db.Pessoa.deleteOne( { id: {$gt:1} } );

@@ -1,0 +1,12 @@
+create (p:Pessoa{id:1, nome: 'Luis', cpf:'11244567800', whatsapp:'49999902232', email: 'luistorres@hotmail.com', endereco: 'Chapecó'});
+create (p:Pessoa{id:2, nome: 'Pedro', cpf:'11244544800', whatsapp:'49999902232', email: 'pedro@hotmail.com', endereco: 'Chapecó'});
+create (p:Pessoa{id:3, nome: 'Ramiro', cpf:'11255567800', whatsapp:'49999902232', email: 'ramiro@hotmail.com', endereco: 'Chapecó'});
+create (p:Pessoa{id:4, nome: 'Rafael', cpf:'11244567110', whatsapp:'49999902232', email: 'rafael@hotmail.com', endereco: 'Chapecó'});
+
+create (r:Projeto{id:1, nome: 'Bot de Vendas', tipo:'Automação', entrega: '10/10/2025'});
+create (r:Projeto{id:2, nome: 'Banco de Dados para Industria', tipo:'Banco de Dados', entrega: '10/10/2026'});
+
+match (p:Pessoa{id:1}), (r:Projeto{id:1}) create (p)-[f:integra] -> (r);
+match (p:Pessoa{id:2}), (r:Projeto{id:1}) create (p)-[f:integra] -> (r);
+match (p:Pessoa{id:3}), (r:Projeto{id:2}) create (p)-[f:integra] -> (r);
+match (p:Pessoa{id:4}), (r:Projeto{id:2}) create (p)-[f:integra] -> (r);
