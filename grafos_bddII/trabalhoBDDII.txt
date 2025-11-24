@@ -1,0 +1,66 @@
+create (l:Laboratorio{id:1, nome: 'Laboratório FB', localizacao:"Bloco A"});
+create (l:Laboratorio{id:2, nome: 'Laboratório CD', localizacao:"Bloco A"});
+
+create (c:Computador{id:1, processador: 'Processador Intel Core', memoria: 640, ssd_hd: "HD SSD Kingston", mac_add: "00:1B:44:11:3A:B7", valor: 15000, marca: "Apple"});
+create (c:Computador{id:2, processador: 'Processador AMD Ryzen', memoria: 256, ssd_hd: "SSD Pichau Rover", mac_add: "00:19:B9:FB:E2:58", valor: 12000, marca: "Dell"});
+create (c:Computador{id:3, processador: 'Processador AMD Ryzen', memoria: 800, ssd_hd: "HD SSD Kingston", mac_add: "E0:06:E0:FD:EC:06", valor: 12500, marca: "Samsung"});
+create (c:Computador{id:4, processador: 'Processador Intel Core', memoria: 1000, ssd_hd: "SSD Mancer Reaper RF", mac_add: "A0:B4:42:D9:11:B7", valor: 16000, marca: "Dell"});
+create (c:Computador{id:5, processador: 'Processador Intel Atom', memoria: 320, ssd_hd: "HD SSD 1TB Sandisk", mac_add: "B0:1B:42:12:D6:E9", valor: 12000, marca: "Samsung"});
+
+create (s:Software{id:1, descricao: 'PhotoShop', versao: "CC 2018", licencas_numero: 3, marca: "Adobe"});
+create (s:Software{id:2, descricao: 'Visual Studio Code', versao: "1.88.1", licencas_numero: 4, marca: "Microsoft"});
+create (s:Software{id:3, descricao: 'UnityEngine', versao: "2023.1.12", licencas_numero: 1, marca: "Unity Technologies"});
+
+create (e:Estudante{id:1, nome: 'Luis Torres', matricula: '202400672', curso: 'Sistemas de Informação'});
+create (e:Estudante{id:2, nome: 'Rafael Santos', matricula: '202410678', curso: 'Ciência da Computação'});
+create (e:Estudante{id:3, nome: 'Marcio Rodrigues', matricula: '202010672', curso: 'Design'});
+create (e:Estudante{id:4, nome: 'Pedro Silva', matricula: '202010673', curso: 'Administração'});
+create (e:Estudante{id:5, nome: 'Larissa Marinho', matricula: '202300774', curso: 'Análise e Desenvolvimento de Sistemas'});
+
+match (c:Computador{id: 1}), (l:Laboratorio{nome:'Laboratório A1'}) create (c)-[r:computador_d] -> (l);
+match (c:Computador{id: 2}), (l:Laboratorio{nome:'Laboratório A1'}) create (c)-[r:computador_d] -> (l);
+match (c:Computador{id: 3}), (l:Laboratorio{nome:'Laboratório A1'}) create (c)-[r:computador_d] -> (l);
+match (c:Computador{id: 4}), (l:Laboratorio{nome:'Laboratório A2'}) create (c)-[r:computador_d] -> (l);
+match (c:Computador{id: 5}), (l:Laboratorio{nome:'Laboratório A2'}) create (c)-[r:computador_d] -> (l);
+
+match (s:Software{descricao: 'PhotoShop'}), (c:Computador{id: 1}) create (s)-[r:soft_d] -> (c);
+match (s:Software{descricao: 'PhotoShop'}), (c:Computador{id: 2}) create (s)-[r:soft_d] -> (c);
+match (s:Software{descricao: 'PhotoShop'}), (c:Computador{id: 5}) create (s)-[r:soft_d] -> (c);
+match (s:Software{descricao: 'Visual Studio Code'}), (c:Computador{id: 1}) create (s)-[r:soft_d] -> (c);
+match (s:Software{descricao: 'Visual Studio Code'}), (c:Computador{id: 3}) create (s)-[r:soft_d] -> (c);
+match (s:Software{descricao: 'Visual Studio Code'}), (c:Computador{id: 4}) create (s)-[r:soft_d] -> (c);
+match (s:Software{descricao: 'Visual Studio Code'}), (c:Computador{id: 2}) create (s)-[r:soft_d] -> (c);
+match (s:Software{descricao: 'UnityEngine'}), (c:Computador{id: 5}) create (s)-[r:soft_d] -> (c);
+
+match (e:Estudante{id: 1}), (c:Computador{id: 1}) create (e)-[r:reserva_computador {data: date('2024-09-07'), horario: time('14:00:00')}]->(c);
+match (e:Estudante{id: 3}), (c:Computador{id: 2}) create (e)-[r:reserva_computador {data: date('2024-12-24'), horario: time('09:30:00')}]->(c);
+match (e:Estudante{id: 1}), (c:Computador{id: 3}) create (e)-[r:reserva_computador {data: date('2024-12-24'), horario: time('10:00:00')}]->(c);
+match (e:Estudante{id: 2}), (c:Computador{id: 4}) create (e)-[r:reserva_computador {data: date('2024-09-07'), horario: time('19:00:00')}]->(c);
+match (e:Estudante{id: 3}), (c:Computador{id: 5}) create (e)-[r:reserva_computador {data: date('2024-02-22'), horario: time('08:30:00')}]->(c);
+match (e:Estudante{id: 4}), (c:Computador{id: 2}) create (e)-[r:reserva_computador {data: date('2024-05-17'), horario: time('13:30:00')}]->(c);
+match (e:Estudante{id: 5}), (c:Computador{id: 3}) create (e)-[r:reserva_computador {data: date('2024-04-17'), horario: time('17:30:00')}]->(c);
+
+// A
+match (e:Estudante)-[r:reserva_computador]->(c:Computador)-[:computador_d]->(l:Laboratorio{nome: 'Laboratório FB'}) return e.nome, r.data, r.horario;
+
+// B
+match (l:Laboratorio)<-[:computador_d]-(c:Computador) return l.nome, count(c) as NumComputadores;
+
+// C
+match (e:Estudante)-[r:reserva_computador]->(c:Computador)<-[:soft_d]-(s:Software) return e.nome, r.data, s.descricao;
+
+// D
+match (e:Estudante)-[r:reserva_computador {data: date('2024-09-07')}]->(c:Computador) set r.data = date('2024-09-08') return e.nome, r.data, r.horario;
+
+// E
+match (l:Laboratorio)<-[:computador_d]-(c:Computador) return l.nome, sum(c.valor) as ValorTotal;
+
+// F
+match (e:Estudante)-[r:reserva_computador]->(c:Computador) where r.data = date() and r.horario >= time('08:00:00') and r.horario <= time('12:00:00') return e.nome, r.data, r.horario;
+
+// G
+match (e:Estudante {curso: 'Análise e Desenvolvimento de Sistemas'})-[r:reserva_computador]->(c:Computador) where r.data >= date('2024-04-01') and r.data <= date('2024-06-30') return c.id, c.marca, c.processador;
+
+// H
+match (e:Estudante)-[r:reserva_computador {data: date('2024-12-24')}]->(c:Computador) return e.nome, c.id;
+match (e:Estudante)-[r:reserva_computador {data: date('2024-12-24')}]->(c:Computador) delete r;

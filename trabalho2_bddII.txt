@@ -1,0 +1,75 @@
+create database trabalhodbgis;
+create extension postgis;
+
+CREATE TABLE geometrias(id int4 primary key,tipo char(20),nome char(20));
+SELECT AddGeometryColumn('geometrias', 'coordenadas', -1,'POLYGON', 2);
+SELECT AddGeometryColumn('geometrias', 'linhas', -1,'LINESTRING', 2);
+SELECT AddGeometryColumn('geometrias', 'pontos', -1,'POINT', 2);
+
+INSERT INTO geometrias
+(id, tipo, nome,
+coordenadas)VALUES
+(1, 'Retangulo', 'ABCD',
+st_PolygonFromText('POLYGON((
+1 6, 4 6, 4 1, 1 1, 1 6))'));
+
+INSERT INTO geometrias
+(id, tipo, nome,
+coordenadas)VALUES
+(2, 'Retangulo', 'EFG',
+st_PolygonFromText('POLYGON((
+4 5, 8 3, 4 2, 4 5))'));
+
+INSERT INTO geometrias
+(id, nome, linhas) values
+(3, 'IH',
+st_GeomFromText('LINESTRING(2 4, 2 2)'));
+
+INSERT INTO geometrias
+(id, nome, linhas) values
+(4, 'JK',
+st_GeomFromText('LINESTRING(5 5, 8 5)'));
+
+INSERT INTO geometrias
+(id,nome,pontos) VALUES
+(5,'L',
+st_GeomFromText('POINT(7 1)'));
+
+Select st_Touches(f1.coordenadas, f2.coordenadas)
+from geometrias f1, geometrias f2 where f1.nome =
+'ABCD' and f2.nome='EFG';
+select st_contains(f1.coordenadas, f2.coordenadas)
+from geometrias f1, geometrias f2 where f1.nome =
+'ABCD' and f2.nome='EFG';
+Select st_crosses(r1.linhas, r2.linhas)
+from geometrias r1, geometrias r2 where
+r1.nome = 'IH' and r2.nome='JK';
+Select st_Distance(p1.pontos, l1.linhas) as distancia
+from geometrias p1, geometrias l1 where p1.nome =
+'L' and l1.nome='JK';
+Select st_Length(linhas) as extensao_1 from
+geometrias where nome = 'IH';
+Select st_Length(linhas)as extensao_2 from
+geometrias where nome = 'JK';
+
+select st_area(coordenadas) as area from
+geometrias where nome='ABCD';
+select st_perimeter(coordenadas) as perimetro from
+geometrias where nome='ABCD';
+select st_area(coordenadas) as area from
+geometrias where nome='EFG';
+select st_perimeter(coordenadas) as perimetro from
+geometrias where nome='EFG';
+
+Select sum(st_area(coordenadas)) as area from geometrias;
+Select sum(st_perimeter(coordenadas)) as perimetro from geometrias;
+
+Select sum(st_perimeter(coordenadas)) as perimetro from geometrias;
+
+Select avg(st_Length(linhas)) as perimetro from geometrias;
+select st_contains(l1.linhas, p1.pontos)
+from geometrias l1, geometrias p1 where l1.nome =
+'IH' and p1.nome='l';
+select st_contains(l2.linhas, p1.pontos)
+from geometrias l2, geometrias p1 where l2.nome =
+'JK' and p1.nome='l';
