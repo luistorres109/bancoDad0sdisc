@@ -1,0 +1,37 @@
+-- Gerenciador MySQL Workbench
+-- Linguagem MySQL
+
+CREATE TABLE IF NOT EXISTS `Pessoa` (   `idPessoa` INT NOT NULL,   `nome` VARCHAR(45) NOT NULL,   `cpf` VARCHAR(11) NOT NULL,   `endereco` VARCHAR(100) NULL,   `uf` varchar(2) NULL,   `datanasc` DATE NULL,   PRIMARY KEY (`idPessoa`),   UNIQUE INDEX `cpf_UNIQUE` (`cpf` ASC) VISIBLE) ENGINE = InnoDB; 
+CREATE TABLE IF NOT EXISTS `Veiculo` (   `placa` VARCHAR(7) NOT NULL,   `chassi` VARCHAR(17) NOT NULL,   `marca` VARCHAR(10) NULL,   `modelo` VARCHAR(10) NULL,   `ano` INT(4) NULL,   `cor` VARCHAR(12) NULL,   `cidade_origem` VARCHAR(20) NULL,   `uf_origem` CHAR(2) NULL,   `Pessoa_idPessoa` INT NOT NULL,   UNIQUE INDEX `placa_UNIQUE` (`placa` ASC) VISIBLE,   PRIMARY KEY (`chassi`),   INDEX `fk_Veiculo_Pessoa_idx` (`Pessoa_idPessoa` ASC) VISIBLE,   CONSTRAINT `fk_Veiculo_Pessoa`     FOREIGN KEY (`Pessoa_idPessoa`)     REFERENCES `Pessoa` (`idPessoa`)     ON DELETE NO ACTION     ON UPDATE NO ACTION) ENGINE = InnoDB; 
+CREATE TABLE IF NOT EXISTS `Passeio` (   `num_portas` INT NOT NULL,   `volume_portamalas` FLOAT NULL,   `Veiculo_chassi` VARCHAR(17) NOT NULL,   PRIMARY KEY (`num_portas`),   INDEX `fk_Passeio_Veiculo1_idx` (`Veiculo_chassi` ASC) VISIBLE,   CONSTRAINT `fk_Passeio_Veiculo1`     FOREIGN KEY (`Veiculo_chassi`)     REFERENCES `Veiculo` (`chassi`)     ON DELETE NO ACTION     ON UPDATE NO ACTION) ENGINE = InnoDB; 
+CREATE TABLE IF NOT EXISTS `Motocicleta` (   `capacidade_tanque` FLOAT NOT NULL,   `cilindradas` FLOAT NULL,   `Veiculo_chassi` VARCHAR(17) NOT NULL,   PRIMARY KEY (`capacidade_tanque`),   INDEX `fk_Motocicleta_Veiculo1_idx` (`Veiculo_chassi` ASC) VISIBLE,   CONSTRAINT `fk_Motocicleta_Veiculo1`     FOREIGN KEY (`Veiculo_chassi`)     REFERENCES `Veiculo` (`chassi`)     ON DELETE NO ACTION     ON UPDATE NO ACTION) ENGINE = InnoDB;
+
+INSERT INTO `Pessoa` (`idPessoa`, `nome`, `cpf`, `endereco`, `uf`, `datanasc`) VALUES (1, 'João Silva', '12345678900', 'Chapecó - Rua Panama, B. Passo dos Fortes', 'SC', '2000-03-22'), (2, 'Maria Souza', '98765432100', 'Florianópolis - Rua Augusta, B. Panama', 'SC', '1978-03-27'); 
+INSERT INTO `Veiculo` (placa, chassi, marca, modelo, ano, cor, cidade_origem, uf_origem, Pessoa_idPessoa) VALUES ('MNO1234', '12245JKFF', 'Honda', 'Civic', 2019, 'Preto', 'Chapecó', 'SC', 1), ('ABC5678', '12345JKSC', 'Nissan', 'Sentra', 2020, 'Azul', 'Florianópolis', 'SC', 2); 
+INSERT INTO `Passeio` (num_portas, volume_portamalas, Veiculo_chassi) VALUES (1, 27.2, '12245JKFF'), (2, 25.0, '12345JKSC'); 
+INSERT INTO `Motocicleta` (capacidade_tanque, cilindradas, Veiculo_chassi) VALUES (15.0, 800.0, '12245JKFF'), (18.0, 1200.0, '12345JKSC');
+
+SELECT Pessoa.* FROM Pessoa JOIN Veiculo ON Pessoa.idPessoa = Veiculo.Pessoa_idPessoa JOIN Motocicleta ON Veiculo.chassi = Motocicleta.Veiculo_chassi; 
+
+SELECT Pessoa.nome, Pessoa.cpf, Veiculo.placa, Veiculo.ano, Veiculo.marca, Veiculo.cor FROM Pessoa JOIN Veiculo ON Pessoa.idPessoa = Veiculo.Pessoa_idPessoa;
+
+SELECT * FROM Motocicleta;
+
+SELECT Pessoa.nome, Pessoa.endereco, Veiculo.cidade_origem FROM Pessoa JOIN Veiculo ON Pessoa.idPessoa = Veiculo.Pessoa_idPessoa WHERE SUBSTRING_INDEX(Pessoa.endereco, '-', 1) <> Veiculo.cidade_origem; 
+
+SELECT * FROM Motocicleta WHERE cilindradas > 800; 
+
+ SELECT DISTINCT Pessoa.endereco FROM Pessoa JOIN Veiculo ON Pessoa.idPessoa = Veiculo.Pessoa_idPessoa JOIN Motocicleta ON Veiculo.chassi = Motocicleta.Veiculo_chassi WHERE SUBSTRING_INDEX(Pessoa.endereco, '-', 1) = Veiculo.cidade_origem; 
+ 
+ SELECT Pessoa.nome FROM Pessoa JOIN Veiculo ON Pessoa.idPessoa = Veiculo.Pessoa_idPessoa WHERE Veiculo.marca = 'Nissan'; 
+ 
+ SELECT DISTINCT SUBSTRING_INDEX(Pessoa.endereco, '-', 1) AS Cidade FROM Pessoa UNION SELECT DISTINCT cidade_origem FROM Veiculo; 
+
+SELECT Pessoa.*, Veiculo.*, Passeio.num_portas, Passeio.volume_portamalas, Motocicleta.capacidade_tanque, Motocicleta.cilindradas FROM Pessoa LEFT JOIN Veiculo ON Pessoa.idPessoa = Veiculo.Pessoa_idPessoa LEFT JOIN Passeio ON Veiculo.chassi = Passeio.Veiculo_chassi LEFT JOIN Motocicleta ON Veiculo.chassi = Motocicleta.Veiculo_chassi; 
+
+CREATE VIEW VeiculosCompleto AS SELECT * FROM Veiculo; 
+
+ALTER TABLE Veiculo ADD quilometragem INT; 
+
+UPDATE Veiculo SET quilometragem = 15000 WHERE placa = 'MNO1234';
+
